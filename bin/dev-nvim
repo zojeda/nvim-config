@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Abre Neovim dentro del devcontainer del directorio actual, levantándolo si no existe.
+# Uso: dev-nvim [worktree]   (worktree = nombre de su carpeta o de su rama)
+#
+# Copia esta configuración al contenedor en cada arranque (el contenedor es un espejo del
+# host) y la primera vez instala Neovim y los plugins en el home del usuario remoto.
+set -euo pipefail
+
+has_config() { [ -f "$1/.devcontainer/devcontainer.json" ] || [ -f "$1/.devcontainer.json" ]; }
+
+# Raíz: el primer directorio hacia arriba con devcontainer que no sea un worktree enlazado
+# (.git como archivo). Desde dentro de un worktree anidado se usa el contenedor del repo
+# principal y se abre ese worktree; si no hay repo principal, el worktree tiene el suyo.
+dir=$PWD root='' inner=''
+while :; do
+  if has_config "$dir"; then
+    if [ -f "$dir/.git" ]; then inner=${inner:-$dir}; else root=$dir; break; fi
+  fi
+  [ "$dir" = / ] && break
+  dir=$(dirname "$dir")
+done
+if [ -z "$root" ]; then root=$inner inner=''; fi
+[ -n "$root" ] || { echo "No hay devcontainer en $PWD ni en sus directorios padre" >&2; exit 1; }
+
+path=$inner
+if [ -n "${1:-}" ]; then
+  path=$(git -C "$root" worktree list --porcelain 2>/dev/null | awk -v t="$1" '
+    /^worktree /{p=substr($0,10); n=p; sub(/.*\//,"",n); if (n==t) {print p; exit}}
+    /^branch refs\/heads\//{if (substr($0,19)==t) {print p; exit}}') || true
+  if [ -z "$path" ]; then
+    echo "No encontré el worktree '$1' en $root" >&2
+    git -C "$root" worktree list >&2 2>/dev/null || true
+    exit 1
+  fi
+fi
+
+out=$(devcontainer up --workspace-folder "$root") || { echo "$out" >&2; exit 1; }
+field() { sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p" <<<"$out"; }
+workspace=$(field remoteWorkspaceFolder)
+container=$(field containerId)
+user=$(field remoteUser)
+
+# Los worktrees creados en el host guardan la ruta del host; los creados en el contenedor, la del contenedor.
+case $path in
+  '' | "$root" | "$workspace") rel='' ;;
+  "$root"/*) rel=/${path#"$root"/} ;;
+  "$workspace"/*) rel=/${path#"$workspace"/} ;;
+  *) echo "El worktree $path está fuera de $root y no está montado en el contenedor" >&2; exit 1 ;;
+esac
+
+# La configuración es el repo donde vive este script (bin/..). Se copia como el usuario
+# remoto para que los archivos queden a su nombre.
+config=$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")
+tar -C "$config" --exclude=.git -cf - . |
+  docker exec -i -u "$user" "$container" sh -c \
+    'rm -rf "$HOME/.config/nvim" && mkdir -p "$HOME/.config/nvim" && tar -xf - -C "$HOME/.config/nvim"'
+
+# Se entra con el CLI y no con docker exec para heredar el usuario y el entorno del devcontainer.
+in_container=(devcontainer exec --container-id "$container" --workspace-folder "$root")
+"${in_container[@]}" sh -c '"$HOME/.config/nvim/install.sh"'
+
+exec "${in_container[@]}" \
+  --remote-env "TERM=${TERM:-xterm-256color}" \
+  --remote-env "COLORTERM=${COLORTERM:-truecolor}" \
+  ${NVIM_NERD_FONT:+--remote-env "NVIM_NERD_FONT=$NVIM_NERD_FONT"} \
+  sh -c 'PATH="$HOME/.local/bin:$PATH"; cd "$1" && exec nvim .' sh "$workspace$rel"

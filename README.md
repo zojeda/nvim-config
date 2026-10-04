@@ -15,6 +15,30 @@ On a machine with an SSH key on GitHub, `git clone git@github.com:zojeda/nvim-co
 
 The first start installs the plugin manager, plugins, syntax parsers and language servers. It takes a few minutes. On native Windows the folder is `%LOCALAPPDATA%\nvim`.
 
+On Linux, one command does the whole setup without root, including Neovim itself when it is missing or older than 0.11:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zojeda/nvim-config/main/install.sh | sh
+```
+
+It installs into `~/.local` and `~/.config/nvim`, and is safe to run again.
+
+## Dev containers
+
+`bin/dev-nvim` opens Neovim inside the dev container of the current project, so language servers, git and search run against the container's tools. It needs Docker and the `devcontainer` CLI on the host.
+
+```bash
+ln -s ~/.config/nvim/bin/dev-nvim ~/.local/bin/dev-nvim   # once
+cd my-project && dev-nvim                                  # or: dev-nvim <worktree>
+```
+
+It starts the container if needed, copies this config into the remote user's home, runs `install.sh` there, and opens Neovim at the workspace folder.
+
+- The first run in a container takes about a minute; later runs start in seconds.
+- The container's copy mirrors the host config and is replaced on every launch, so edit the config on the host.
+- Everything lands in the remote user's home, so a rebuilt container installs again on the next launch.
+- Copying to the system clipboard goes through the terminal (OSC 52); paste with the terminal's own shortcut.
+
 ## Requirements
 
 | Needed | Why |
@@ -49,3 +73,5 @@ Plugin versions are pinned in `lazy-lock.json`. After `:Lazy update` on one devi
 | `lua/plugins/code.lua` | Syntax, language servers, completion |
 | `lua/plugins/markdown.lua` | Markdown preview |
 | `cheatsheet.html` | Source of the cheatsheet PDF |
+| `install.sh` | Installer for Linux machines and dev containers |
+| `bin/dev-nvim` | Opens Neovim inside a project's dev container |

@@ -7,6 +7,15 @@ local function pick(name)
   end
 end
 
+local function has(cmd)
+  return vim.fn.executable(cmd) == 1
+end
+
+-- Minimal machines and containers may lack these; skip what cannot be installed
+-- instead of failing on every start.
+local can_compile = has("cc") or has("gcc") or has("clang")
+local headless = #vim.api.nvim_list_uis() == 0
+
 return {
   -- Syntax highlighting
   {
@@ -16,7 +25,8 @@ return {
     lazy = false,
     main = "nvim-treesitter.configs",
     opts = {
-      ensure_installed = {
+      sync_install = headless, -- lets install.sh finish the parsers before it exits
+      ensure_installed = not can_compile and {} or {
         "bash",
         "css",
         "diff",
@@ -36,7 +46,7 @@ return {
         "vimdoc",
         "yaml",
       },
-      auto_install = true,
+      auto_install = can_compile,
       highlight = { enable = true },
       indent = { enable = true },
     },
@@ -49,7 +59,8 @@ return {
     "mason-org/mason-lspconfig.nvim",
     event = { "BufReadPre", "BufNewFile" },
     dependencies = { "mason-org/mason.nvim", "neovim/nvim-lspconfig" },
-    opts = { ensure_installed = { "ts_ls", "lua_ls" } },
+    -- ts_ls is installed with npm
+    opts = { ensure_installed = has("npm") and { "ts_ls", "lua_ls" } or { "lua_ls" } },
     config = function(_, opts)
       vim.diagnostic.config({
         severity_sort = true,
