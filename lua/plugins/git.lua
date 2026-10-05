@@ -18,12 +18,67 @@ local function toggle_review()
   end
 end
 
-local function review_against()
-  vim.ui.input({ prompt = "Review against (branch, commit or range): ", default = "main...HEAD" }, function(ref)
-    if ref and ref ~= "" then
-      require("config.util").close_reviews()
-      from_editor("DiffviewOpen " .. ref)()
+local function git(args)
+  local result = vim.system(vim.list_extend({ "git" }, args), { text = true }):wait()
+  if result.code == 0 then
+    return vim.trim(result.stdout)
+  end
+end
+
+local function ref_exists(ref)
+  return git({ "rev-parse", "--verify", "--quiet", ref .. "^{commit}" }) ~= nil
+end
+
+-- The branch this repo's work is reviewed against: the remote's default branch,
+-- else the first of main / master / develop that exists.
+local function detect_base()
+  local candidates = {}
+  local remote_head = git({ "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD" })
+  if remote_head then
+    vim.list_extend(candidates, { (remote_head:gsub("^origin/", "")), remote_head })
+  end
+  vim.list_extend(candidates, { "main", "master", "develop", "origin/main", "origin/master", "origin/develop" })
+  for _, ref in ipairs(candidates) do
+    if ref_exists(ref) then
+      return ref
     end
+  end
+end
+
+-- A base typed here becomes the default for the repo. It is kept in the repo's own
+-- git config, so worktrees and dev containers of the same repo share it.
+local BASE_KEY = "nvim.reviewbase"
+
+-- Review everything on this branch since it left the base, uncommitted edits included.
+local function review_branch()
+  if not git({ "rev-parse", "--git-dir" }) then
+    vim.notify("Not inside a git repository", vim.log.levels.WARN)
+    return
+  end
+
+  local default = git({ "config", "--get", BASE_KEY }) or detect_base() or ""
+  vim.ui.input({ prompt = "Review this branch against: ", default = default }, function(input)
+    input = vim.trim(input or "")
+    if input == "" then
+      return
+    end
+
+    -- A range or extra options are passed to Diffview as typed.
+    local advanced = input:find("%s") or input:find("..", 1, true) or input:sub(1, 1) == "-"
+    if not advanced and not ref_exists(input) then
+      vim.notify(("No branch or commit named '%s'"):format(input), vim.log.levels.WARN)
+      return
+    end
+    if input ~= default then
+      git({ "config", "--local", BASE_KEY, input })
+    end
+
+    -- --imply-local shows the working files on the right, so they can be edited in place.
+    local args = advanced and vim.split(input, "%s+") or { input .. "...HEAD", "--imply-local" }
+    local util = require("config.util")
+    util.focus_editor()
+    util.close_reviews()
+    require("diffview").open(args)
   end)
 end
 
@@ -139,7 +194,7 @@ return {
     cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory", "DiffviewToggleFiles", "DiffviewFocusFiles" },
     keys = {
       { "<leader>gd", toggle_review, desc = "Review changes (toggle)" },
-      { "<leader>gD", review_against, desc = "Review against branch / commit" },
+      { "<leader>gD", review_branch, desc = "Review the whole branch" },
       { "<leader>gh", "<cmd>DiffviewFileHistory %<cr>", desc = "History of this file" },
       { "<leader>gH", from_editor("DiffviewFileHistory"), desc = "History of the branch" },
     },
