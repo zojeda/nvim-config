@@ -283,7 +283,9 @@
         <dl>
           <dt><kbd>Enter</kbd></dt><dd>Show the file side by side</dd>
           <dt><kbd>Tab</kbd> <kbd>Shift+Tab</kbd></dt><dd>Next / previous file</dd>
+          <dt><kbd>]c</kbd> <kbd>[c</kbd></dt><dd>Next / previous change</dd>
           <dt><kbd>gf</kbd></dt><dd>Go to the file (ends review)</dd>
+          <dt><kbd>Ctrl+W gf</kbd></dt><dd>File in a new tab (gT returns)</dd>
           <dt><kbd>s</kbd> <kbd>-</kbd></dt><dd>Stage / unstage the file</dd>
           <dt><kbd>S</kbd> <kbd>U</kbd></dt><dd>Stage all / unstage all</dd>
           <dt><kbd>X</kbd></dt><dd>Discard changes in the file</dd>
@@ -292,14 +294,6 @@
         </dl>
       </section>
 
-      <section>
-        <h2>Commit message</h2>
-        <dl>
-          <dt><kbd>i</kbd></dt><dd>Start typing the message</dd>
-          <dt><kbd>Ctrl+C Ctrl+C</kbd></dt><dd>Confirm the commit</dd>
-          <dt><kbd>Ctrl+C Ctrl+K</kbd></dt><dd>Cancel</dd>
-        </dl>
-      </section>
     </div>
 
     <!-- Column 4 -->
@@ -321,21 +315,30 @@
       </section>
 
       <section>
+        <h2>Commit message</h2>
+        <dl>
+          <dt><kbd>i</kbd></dt><dd>Start typing the message</dd>
+          <dt><kbd>Ctrl+C Ctrl+C</kbd></dt><dd>Confirm the commit</dd>
+          <dt><kbd>Ctrl+C Ctrl+K</kbd></dt><dd>Cancel</dd>
+        </dl>
+      </section>
+
+      <section>
         <h2>Vim essentials</h2>
         <dl>
-          <dt><kbd>i</kbd> <kbd>a</kbd> <kbd>o</kbd></dt><dd>Insert before / after / on a new line</dd>
+          <dt><kbd>i</kbd> <kbd>a</kbd> <kbd>o</kbd></dt><dd>Insert before / after / below</dd>
           <dt><kbd>Esc</kbd></dt><dd>Back to normal mode</dd>
           <dt><kbd>v</kbd> <kbd>V</kbd></dt><dd>Select characters / whole lines</dd>
           <dt><kbd>u</kbd> <kbd>Ctrl+R</kbd></dt><dd>Undo / redo</dd>
           <dt><kbd>dd</kbd> <kbd>yy</kbd> <kbd>p</kbd></dt><dd>Cut line / copy line / paste</dd>
           <dt><kbd>d</kbd> <kbd>y</kbd></dt><dd>Cut / copy the selection</dd>
-          <dt><kbd>ciw</kbd></dt><dd>Change the word under the cursor</dd>
+          <dt><kbd>ciw</kbd></dt><dd>Change the word under cursor</dd>
           <dt><kbd>.</kbd></dt><dd>Repeat the last change</dd>
           <dt><kbd>/text</kbd> <kbd>n</kbd> <kbd>N</kbd></dt><dd>Search, then next / previous</dd>
           <dt><kbd>*</kbd></dt><dd>Search the word under cursor</dd>
           <dt><kbd>gg</kbd> <kbd>G</kbd></dt><dd>Top / bottom of the file</dd>
           <dt><kbd>w</kbd> <kbd>b</kbd></dt><dd>Next / previous word</dd>
-          <dt><kbd>0</kbd> <kbd>$</kbd> <kbd>%</kbd></dt><dd>Line start / end / matching bracket</dd>
+          <dt><kbd>0</kbd> <kbd>$</kbd> <kbd>%</kbd></dt><dd>Line start / end / matching ()</dd>
           <dt><kbd>:w</kbd> <kbd>:q</kbd></dt><dd>Save / close the window</dd>
         </dl>
       </section>
