@@ -2,7 +2,7 @@
 
 A Neovim setup that behaves like VS Code: explorer sidebar with git status, file tabs, fuzzy search, language servers with completion, and a review-and-commit flow with side-by-side diffs. Markdown opens rendered.
 
-Every shortcut is on one printable page: [cheatsheet.pdf](cheatsheet.pdf). Inside Neovim, press `Space` and wait to see them.
+Every shortcut is listed in [docs/cheatsheet.md](docs/cheatsheet.md), with a printable one-page version in [docs/cheatsheet.pdf](docs/cheatsheet.pdf). Inside Neovim, press `Space` and wait to see them.
 
 ## Install
 
@@ -72,6 +72,8 @@ Plugin versions are pinned in `lazy-lock.json`. After `:Lazy update` on one devi
 | `lua/plugins/git.lua` | Change markers, review, source control |
 | `lua/plugins/code.lua` | Syntax, language servers, completion |
 | `lua/plugins/markdown.lua` | Markdown preview |
-| `cheatsheet.html` | Source of the cheatsheet PDF |
+| `docs/cheatsheet.md` | Every shortcut, by task |
+| `docs/cheatsheet.pdf` | The same on one printable page |
+| `docs/cheatsheet.html` | Source of both; `docs/build.py` regenerates the Markdown |
 | `install.sh` | Installer for Linux machines and dev containers |
 | `bin/dev-nvim` | Opens Neovim inside a project's dev container |
