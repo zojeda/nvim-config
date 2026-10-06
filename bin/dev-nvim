@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Abre Neovim dentro del devcontainer del directorio actual, levantándolo si no existe.
-# Uso: dev-nvim [worktree]   (worktree = nombre de su carpeta o de su rama)
+# Uso: dev-nvim [worktree|directorio]
+#   worktree   = nombre de su carpeta o de su rama
+#   directorio = ruta dentro del proyecto, relativa o absoluta (`dev-nvim .` abre el actual)
 #
 # Copia esta configuración al contenedor en cada arranque (el contenedor es un espejo del
 # host) y la primera vez instala Neovim y los plugins en el home del usuario remoto.
@@ -22,13 +24,18 @@ done
 if [ -z "$root" ]; then root=$inner inner=''; fi
 [ -n "$root" ] || { echo "No hay devcontainer en $PWD ni en sus directorios padre" >&2; exit 1; }
 
+# El argumento se busca primero como worktree, así un nombre que ya resolvía sigue haciéndolo;
+# si además existe un directorio con ese nombre, `./nombre` lo elige.
 path=$inner
 if [ -n "${1:-}" ]; then
   path=$(git -C "$root" worktree list --porcelain 2>/dev/null | awk -v t="$1" '
     /^worktree /{p=substr($0,10); n=p; sub(/.*\//,"",n); if (n==t) {print p; exit}}
     /^branch refs\/heads\//{if (substr($0,19)==t) {print p; exit}}') || true
+  # pwd lógico (sin -P): la raíz salió de $PWD y los prefijos tienen que coincidir.
+  # CDPATH vacío: si no, cd puede ir a otro directorio e imprimir su ruta.
+  if [ -z "$path" ] && [ -d "$1" ]; then path=$(CDPATH='' cd -- "$1" && pwd); fi
   if [ -z "$path" ]; then
-    echo "No encontré el worktree '$1' en $root" >&2
+    echo "No encontré el worktree ni el directorio '$1' en $root" >&2
     git -C "$root" worktree list >&2 2>/dev/null || true
     exit 1
   fi
@@ -45,7 +52,7 @@ case $path in
   '' | "$root" | "$workspace") rel='' ;;
   "$root"/*) rel=/${path#"$root"/} ;;
   "$workspace"/*) rel=/${path#"$workspace"/} ;;
-  *) echo "El worktree $path está fuera de $root y no está montado en el contenedor" >&2; exit 1 ;;
+  *) echo "$path está fuera de $root y no está montado en el contenedor" >&2; exit 1 ;;
 esac
 
 # La configuración es el repo donde vive este script (bin/..). Se copia como el usuario

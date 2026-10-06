@@ -29,10 +29,10 @@ It installs into `~/.local` and `~/.config/nvim`, and is safe to run again.
 
 ```bash
 ln -s ~/.config/nvim/bin/dev-nvim ~/.local/bin/dev-nvim   # once
-cd my-project && dev-nvim                                  # or: dev-nvim <worktree>
+cd my-project && dev-nvim                                  # or: dev-nvim <worktree | directory>
 ```
 
-It starts the container if needed, copies this config into the remote user's home, runs `install.sh` there, and opens Neovim at the workspace folder.
+It starts the container if needed, copies this config into the remote user's home, runs `install.sh` there, and opens Neovim at the workspace folder. Pass a worktree (its folder or branch name) or a directory inside the project to open there instead; `dev-nvim .` opens the current directory. A name that is both resolves as the worktree, and `./name` picks the directory.
 
 - The first run in a container takes about a minute; later runs start in seconds.
 - The container's copy mirrors the host config and is replaced on every launch, so edit the config on the host.
